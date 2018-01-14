@@ -1,11 +1,10 @@
-import java.util.List;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class CoolPane extends JPanel {
 
@@ -102,7 +101,7 @@ public class CoolPane extends JPanel {
 		for(int i = 0; i < images.size(); i++) {
 			Entity e = images.get(i);
 			if(wire) g2.drawRect((int)e.getPosition().x, (int)e.getPosition().y, (int)e.getWidth(), (int)e.getHeight());
-			else g2.drawImage(TextureHandler.getImagePng(e.getName()), (int)e.getPosition().x, (int)e.getPosition().y, null);
+			else g2.drawImage(TextureHandler.getImagePng(e.getName()), (int)e.getPosition().x+1, (int)e.getPosition().y+1, null);
 		}
 
 		g.drawImage(img, 0, 0, null);

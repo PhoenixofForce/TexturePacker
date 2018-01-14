@@ -1,14 +1,13 @@
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Window extends JFrame{
@@ -85,7 +84,7 @@ public class Window extends JFrame{
 				random();
 		});
 
-		sizeInput = new JTextField("128");
+		sizeInput = new JTextField("256");
 		controllPanel.add(sizeInput);
 
 		halfSize = new JButton("Half Size");
@@ -158,7 +157,7 @@ public class Window extends JFrame{
 				}
 
 				if(!contains) {
-					images.add(new Entity(s, r.nextInt(Integer.parseInt(sizeInput.getText())), r.nextInt(Integer.parseInt(sizeInput.getText())), TextureHandler.getImagePng(s).getWidth(), TextureHandler.getImagePng(s).getHeight()));
+					images.add(new Entity(s, r.nextInt(Integer.parseInt(sizeInput.getText())), r.nextInt(Integer.parseInt(sizeInput.getText())), TextureHandler.getImagePng(s).getWidth()+2, TextureHandler.getImagePng(s).getHeight()+2));
 				}
 			}
 
@@ -204,14 +203,34 @@ public class Window extends JFrame{
 					PrintWriter w = new PrintWriter(f);
 					w.write(images.size() + "\n");
 					for(Entity en: images) {
-						w.write(en.getName() + " " + (int)en.getPosition().x + " " + (int)en.getPosition().y + " " + (int)en.getWidth() + " " + (int) + en.getHeight() + "\n");
+						w.write(en.getName().substring("texture_".length()) + " " + ((int)en.getPosition().x+1) + " " + ((int)en.getPosition().y+1) + " " + ((int)en.getWidth()-2) + " " + ((int)en.getHeight()-2) + "\n");
 					}
 					w.close();
 
 					BufferedImage image = new BufferedImage(Integer.parseInt(sizeInput.getText()), Integer.parseInt(sizeInput.getText()), BufferedImage.TYPE_INT_ARGB);
 					Graphics g = image.getGraphics();
 					for(Entity en: images) {
-						g.drawImage(TextureHandler.getImagePng(en.getName()), (int)en.getPosition().x, (int)en.getPosition().y, null);
+						BufferedImage i = TextureHandler.getImagePng(en.getName());
+
+						int x = (int)en.getPosition().x+1;
+						int y = (int)en.getPosition().y+1;
+						int width = (int)en.getWidth()-2;
+						int height = (int) en.getHeight()-2;
+
+						//g.drawImage(i, x-1, y+height+1, x-1+1, y+height+1+1, 0, i.getHeight(), 0+1, i.getHeight()+1, null);
+
+						g.drawImage(i, x-1, y-1, x-1+1, y-1+1, 0, 0, 0+1, 0+1, null);
+						g.drawImage(i, x-1, y+height, x-1+1, y+height+1, 0, i.getHeight()-1, 0+1, i.getHeight(), null);
+						g.drawImage(i, x+width, y-1, x+width+1, y-1+1, i.getWidth()-1, 0, i.getWidth(), 0+1, null);
+						g.drawImage(i, x+width, y+height, x+width+1, y+height+1, i.getWidth()-1, i.getHeight()-1, i.getWidth(), i.getHeight(), null);
+
+
+						g.drawImage(i, x-1, y, x-1+1, y+height-1+1, 0, 0, 0+1, i.getHeight()-1+1, null);
+						g.drawImage(i, x, y-1, x+width-1+1, y-1+1, 0, 0, i.getWidth()-1+1, 0+1, null);
+						g.drawImage(i, x+width, y, x+width+1, y+height-1+1, i.getWidth()-1, 0, i.getWidth(), i.getHeight()-1+1, null);
+						g.drawImage(i, x, y+height, x+width-1+1, y+height+1, 0, i.getHeight()-1, i.getWidth()-1+1, i.getHeight(), null);
+
+						g.drawImage(i, x, y, null);
 					}
 					ImageIO.write(image, "PNG", img);
 
@@ -266,7 +285,11 @@ public class Window extends JFrame{
 
 				lastDrawing = System.currentTimeMillis();
 
-				viewPanel.paintComponent(images, Integer.parseInt(size), wire);
+				try {
+					viewPanel.paintComponent(images, Integer.parseInt(size), wire);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				try {
 					Thread.sleep(Math.max(1000/60 - (System.currentTimeMillis() - lastDrawing), 0));
 				} catch (InterruptedException e) {
