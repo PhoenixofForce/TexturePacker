@@ -22,7 +22,7 @@ public class Entity {
 
 	@Override
 	public boolean equals(Object n) {
-		if(n instanceof  Entity) {
+		if(n instanceof Entity) {
 			Entity e = (Entity) n;
 			return pos.equals(e.pos) && velo.equals(e.velo) && width == e.width && height == e.height;
 		}
