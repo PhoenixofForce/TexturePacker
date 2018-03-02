@@ -5,6 +5,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,27 +22,33 @@ public class Window extends JFrame{
 	private JTextField sizeInput;
 	private CoolPane viewPanel;
 
-	boolean packing, wire;
+	boolean packing;
+
+	private int buttonWidth = 150, wire;
+
+	private File lastOpened;
 
 	public Window() {
-		this.setTitle("POF - Texture Packer");
+		this.setTitle("Texture Packer");
 		this.setMinimumSize(new Dimension(800, 600));
 		this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		this.setLayout(new BorderLayout());
 		this.setVisible(true);
 
-		wire = true;
+		wire = 0;
 
 		images = new ArrayList<>();
 		r = new Random();
 
 		controllPanel = new JPanel();
-		controllPanel.setLayout(new BoxLayout(controllPanel, BoxLayout.Y_AXIS));
-		this.add(controllPanel, BorderLayout.LINE_END);
-		controllPanel.setBackground(Color.LIGHT_GRAY);
+		controllPanel.setLayout(null);
+		controllPanel.setSize(new Dimension(buttonWidth, 450));
+		controllPanel.setPreferredSize((new Dimension(buttonWidth, 450)));
+		controllPanel.setMaximumSize((new Dimension(buttonWidth, 450)));
 
 		startPack = new JButton("Start Packing");
 		controllPanel.add(startPack);
+		startPack.setBounds(0, 0, buttonWidth, 50);
 		startPack.addActionListener(e -> {
 			sizeInput.setEnabled(false);
 			importRes.setEnabled(false);
@@ -56,6 +64,7 @@ public class Window extends JFrame{
 						d.normalize(1);
 						if(d.length() != 0)change = true;
 						en.setVelocity(d.x, d.y);
+
 						if(sizeInput.getText() != "") en.move(Integer.parseInt(sizeInput.getText()), Integer.parseInt(sizeInput.getText()));
 					}
 				}
@@ -68,6 +77,7 @@ public class Window extends JFrame{
 
 		stopPack = new JButton("Stop Packing");
 		controllPanel.add(stopPack);
+		stopPack.setBounds(0, 50, buttonWidth, 50);
 		stopPack.addActionListener(e -> {
 			packing = false;
 			sizeInput.setEnabled(true);
@@ -76,6 +86,7 @@ public class Window extends JFrame{
 
 		doubleSize = new JButton("Double Size");
 		controllPanel.add(doubleSize);
+		doubleSize.setBounds(0, 100, buttonWidth, 50);
 		doubleSize.addActionListener(e -> {
 				packing = false;
 				sizeInput.setText(Math.max(Integer.parseInt(sizeInput.getText())*2, 1)+"");
@@ -86,9 +97,11 @@ public class Window extends JFrame{
 
 		sizeInput = new JTextField("256");
 		controllPanel.add(sizeInput);
+		sizeInput.setBounds(0, 150, buttonWidth, 50);
 
 		halfSize = new JButton("Half Size");
 		controllPanel.add(halfSize);
+		halfSize.setBounds(0, 200, buttonWidth, 50);
 		halfSize.addActionListener(e -> {
 			packing = false;
 			sizeInput.setText(Math.max(Integer.parseInt(sizeInput.getText())/2, 1)+"");
@@ -99,14 +112,17 @@ public class Window extends JFrame{
 
 		random = new JButton("Random");
 		controllPanel.add(random);
+		random.setBounds(0, 250, buttonWidth, 50);
 		random.addActionListener(e -> random());
 
 		toggleWire = new JButton("Toggle Wire Mode");
 		controllPanel.add(toggleWire);
-		toggleWire.addActionListener(e -> wire = !wire);
+		toggleWire.setBounds(0, 300, buttonWidth, 50);
+		toggleWire.addActionListener(e -> wire = (wire+1)%3);
 
 		importRes = new JButton("Import");
 		controllPanel.add(importRes);
+		importRes.setBounds(0, 350, buttonWidth, 50);
 		importRes.addActionListener(e -> {
 			JFileChooser chooser = new JFileChooser();
 
@@ -135,6 +151,7 @@ public class Window extends JFrame{
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				for(File text: chooser.getSelectedFiles()) {
 					if(text.getName().endsWith("text")) {
+						lastOpened = text;
 						File image = new File(text.getAbsolutePath().substring(0, text.getAbsolutePath().length() - 4) + "png");
 
 						if (text.exists() && image.exists()) {
@@ -165,6 +182,7 @@ public class Window extends JFrame{
 
 		export = new JButton("Export");
 		controllPanel.add(export);
+		export.setBounds(0, 400, buttonWidth, 50);
 		export.addActionListener(e -> {
 			JFileChooser chooser = new JFileChooser(){
 				public void approveSelection() {
@@ -181,6 +199,7 @@ public class Window extends JFrame{
 
 			chooser.setOpaque(true);
 
+			if(lastOpened != null) chooser.setCurrentDirectory(lastOpened);
 			chooser.setAcceptAllFileFilterUsed(false);
 			chooser.addChoosableFileFilter(new FileFilter() {
 				@Override
@@ -200,7 +219,7 @@ public class Window extends JFrame{
 				File img = new File(f.getAbsolutePath().substring(0, f.getAbsolutePath().length()-4) + "png");
 
 				try {
-					PrintWriter w = new PrintWriter(f);
+					PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"), true);
 					w.write(images.size() + "\n");
 					for(Entity en: images) {
 						w.write(en.getName().substring("texture_".length()) + " " + ((int)en.getPosition().x+1) + " " + ((int)en.getPosition().y+1) + " " + ((int)en.getWidth()-2) + " " + ((int)en.getHeight()-2) + "\n");
@@ -242,30 +261,12 @@ public class Window extends JFrame{
 			}
 		});
 
+		this.add(controllPanel, BorderLayout.LINE_END);
+
 		viewPanel = new CoolPane(sizeInput);
 		this.add(viewPanel, BorderLayout.CENTER);
 		viewPanel.setBackground(Color.WHITE);
 		viewPanel.setFocusable(true);
-
-		sizeInput.setMinimumSize(new Dimension(250, 50));
-		sizeInput.setPreferredSize(new Dimension(250, 50));
-		sizeInput.setMaximumSize(sizeInput.getPreferredSize());
-		startPack.setMinimumSize(new Dimension(250, 50));
-		startPack.setMaximumSize(new Dimension(250, 50));
-		stopPack.setMinimumSize(new Dimension(250, 50));
-		stopPack.setMaximumSize(new Dimension(250, 50));
-		doubleSize.setMinimumSize(new Dimension(250, 50));
-		doubleSize.setMaximumSize(new Dimension(250, 50));
-		halfSize.setMinimumSize(new Dimension(250, 50));
-		halfSize.setMaximumSize(new Dimension(250, 50));
-		importRes.setMinimumSize(new Dimension(250, 50));
-		importRes.setMaximumSize(new Dimension(250, 50));
-		toggleWire.setMinimumSize(new Dimension(250, 50));
-		toggleWire.setMaximumSize(new Dimension(250, 50));
-		export.setMinimumSize(new Dimension(250, 50));
-		export.setMaximumSize(new Dimension(250, 50));
-		random.setMinimumSize(new Dimension(250, 50));
-		random.setMaximumSize(new Dimension(250, 50));
 
 		this.pack();
 

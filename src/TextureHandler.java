@@ -1,12 +1,10 @@
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TextureHandler {
 	private TextureHandler() {}
@@ -49,7 +47,7 @@ public class TextureHandler {
 		try {
 			isSheet.put(spriteSheetName, true);
 			loadImagePng(spriteSheetName, fileName.substring(0, fileName.length()-4)+"png");
-			Scanner s = new Scanner(new File(fileName));
+			Scanner s = new Scanner(new File(fileName), "UTF-8");
 
 			int amount = Integer.valueOf(s.nextLine());
 
@@ -72,33 +70,6 @@ public class TextureHandler {
 		}
 	}
 
-	/**
-	 * Not used here (._.
-	 * @param name
-	 * @return
-	 */
-	public static int getCount(String name) {
-		int c = 0;
-		for(String s: textures_png.keySet()) {
-			if(s.toLowerCase().contains(name.toLowerCase() + "_")) c++;
-		}
-
-		for(String s: textures_sprite_sheet.keySet()) {
-			if(s.toLowerCase().contains(name.toLowerCase() + "_")) c++;
-		}
-
-		return c;
-	}
-
-
-	public static Rectangle getSpriteSheetBounds(String textureName) {
-		return textures_sprite_sheet.get(textureName);
-	}
-
-	public static String getSpriteSheetImage(String textureName){
-		return textures_sprite_sheet_texture.get(textureName);
-	}
-
 	public static BufferedImage getImagePng(String textureName) {
 		if (textures_png.containsKey(textureName))
 			return textures_png.get(textureName);
@@ -107,24 +78,6 @@ public class TextureHandler {
 			return textures_png.get(textures_sprite_sheet_texture.get(textureName)).getSubimage(rec.x, rec.y, rec.width, rec.height);
 		}
 		throw new RuntimeException("No such image: " + textureName);
-	}
-
-	public static List<String> getImagesOnSpriteSheet(String spriteSheetName) {
-		return textures_sprite_sheet_texture.keySet().stream().filter(s -> getSpriteSheetImage(s).equals(spriteSheetName)).collect(Collectors.toList());
-	}
-
-	/**
-	 *
-	 * @return Map of all image names, with their bound image as an image icon
-	 */
-	public static Map<String, ImageIcon> getAllImages() {
-		Map<String, ImageIcon> out = new HashMap<>();
-		for(String s: textures_sprite_sheet.keySet()) {
-			BufferedImage img = getImagePng(s);
-			while(img.getWidth() < 32 || img.getHeight() < 32) img = scale(img);
-			out.put(s, new ImageIcon(img));
-		}
-		return out;
 	}
 
 	public static List<String> getAllImageNames() {
@@ -137,12 +90,6 @@ public class TextureHandler {
 			}
 		}
 
-		return out;
-	}
-
-	private static BufferedImage scale(BufferedImage in) {
-		BufferedImage out = new BufferedImage(in.getWidth() * 2, in.getHeight() * 2, BufferedImage.TYPE_INT_ARGB);
-		out.getGraphics().drawImage(in, 0, 0, out.getWidth(), out.getHeight(), null);
 		return out;
 	}
 }

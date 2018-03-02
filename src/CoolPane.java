@@ -15,9 +15,6 @@ public class CoolPane extends JPanel {
 
 	private JTextField in;
 
-	/*
-		I dont like boxlayout, maybe i will change this someday
-	 */
 	public CoolPane(JTextField in) {
 
 		this.in = in;
@@ -67,21 +64,8 @@ public class CoolPane extends JPanel {
 		this.dy = -Integer.parseInt(size) / 2;
 		this.zoom = 0.5f;
 	}
-	private Location getBlockLocation(int xPos, int yPos) {
-		float x = xPos, y = yPos;
-		x -= this.getWidth() / 2.0;
-		y -= this.getHeight() / 2.0;
-		x /= zoom;
-		y /= zoom;
-		x -= dx;
-		y -= dy;
-		x = (float) Math.floor(x);
-		y = (float) Math.floor(y);
 
-		return new Location(x, y);
-	}
-
-	public void paintComponent(List<Entity> images, int size, boolean wire) {
+	public void paintComponent(List<Entity> images, int size, int wire) {
 		Graphics g = this.getGraphics();
 		BufferedImage img = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = (Graphics2D) img.getGraphics();
@@ -100,8 +84,8 @@ public class CoolPane extends JPanel {
 		g2.setColor(Color.RED);
 		for(int i = 0; i < images.size(); i++) {
 			Entity e = images.get(i);
-			if(wire) g2.drawRect((int)e.getPosition().x, (int)e.getPosition().y, (int)e.getWidth(), (int)e.getHeight());
-			else g2.drawImage(TextureHandler.getImagePng(e.getName()), (int)e.getPosition().x+1, (int)e.getPosition().y+1, null);
+			if(wire==0 || wire==1) g2.drawRect((int)e.getPosition().x, (int)e.getPosition().y, (int)e.getWidth(), (int)e.getHeight());
+			if(wire == 1||wire ==2) g2.drawImage(TextureHandler.getImagePng(e.getName()), (int)e.getPosition().x+1, (int)e.getPosition().y+1, null);
 		}
 
 		g.drawImage(img, 0, 0, null);
