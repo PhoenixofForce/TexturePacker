@@ -1,5 +1,7 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -11,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Window extends JFrame{
 
@@ -19,7 +22,7 @@ public class Window extends JFrame{
 
 	private JPanel controllPanel;
 	private JButton startPack, stopPack, doubleSize, halfSize, importRes, toggleWire, export, random;
-	private JTextField sizeInput;
+	private JTextField sizeInput, filter;
 	private CoolPane viewPanel;
 
 	boolean packing;
@@ -52,9 +55,10 @@ public class Window extends JFrame{
 		startPack.addActionListener(e -> {
 			sizeInput.setEnabled(false);
 			importRes.setEnabled(false);
+			filter.setEnabled(false);
 			packing = true;
 			new Thread(()->{
-				Steering s = new Steering(images);
+				Steering s = new Steering(images.stream().filter(e3 -> e3.getName().contains(filter.getText())).collect(Collectors.toList()));
 				boolean change = true;
 				while (packing && change) {
 					change = false;
@@ -65,7 +69,8 @@ public class Window extends JFrame{
 						if(d.length() != 0)change = true;
 						en.setVelocity(d.x, d.y);
 
-						if(sizeInput.getText() != "") en.move(Integer.parseInt(sizeInput.getText()), Integer.parseInt(sizeInput.getText()));
+						String text = sizeInput.getText();
+						if(!text.isEmpty()) en.move(Integer.parseInt(text), Integer.parseInt(text));
 					}
 				}
 
@@ -82,6 +87,7 @@ public class Window extends JFrame{
 			packing = false;
 			sizeInput.setEnabled(true);
 			importRes.setEnabled(true);
+			filter.setEnabled(true);
 		});
 
 		doubleSize = new JButton("Double Size");
@@ -92,6 +98,7 @@ public class Window extends JFrame{
 				sizeInput.setText(Math.max(Integer.parseInt(sizeInput.getText())*2, 1)+"");
 				sizeInput.setEnabled(true);
 				importRes.setEnabled(true);
+				filter.setEnabled(true);
 				random();
 		});
 
@@ -107,6 +114,7 @@ public class Window extends JFrame{
 			sizeInput.setText(Math.max(Integer.parseInt(sizeInput.getText())/2, 1)+"");
 			sizeInput.setEnabled(true);
 			importRes.setEnabled(true);
+			filter.setEnabled(true);
 			random();
 		});
 
@@ -155,7 +163,7 @@ public class Window extends JFrame{
 						File image = new File(text.getAbsolutePath().substring(0, text.getAbsolutePath().length() - 4) + "png");
 
 						if (text.exists() && image.exists()) {
-							TextureHandler.loadImagePngSpriteSheet(image.getName().substring(0, image.getName().length() - 5), text.getAbsolutePath());
+							TextureHandler.loadImagePngSpriteSheet(image.getName().substring(0, image.getName().length() - 4), text.getAbsolutePath());
 						} else {
 							JOptionPane.showMessageDialog(new JFrame(), "Either " + text.getAbsolutePath() + " or " + image.getAbsolutePath() + " does not exist.", "File not found", JOptionPane.ERROR_MESSAGE);
 						}
@@ -166,6 +174,7 @@ public class Window extends JFrame{
 			}
 
 			for(String s: TextureHandler.getAllImageNames()) {
+				System.out.println(s);
 				boolean contains = false;
 				for(Entity en: images) {
 					if(en.getName().equals(s)) {
@@ -220,15 +229,17 @@ public class Window extends JFrame{
 
 				try {
 					PrintWriter w = new PrintWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"), true);
-					w.write(images.size() + "\n");
-					for(Entity en: images) {
-						w.write(en.getName().substring("texture_".length()) + " " + ((int)en.getPosition().x+1) + " " + ((int)en.getPosition().y+1) + " " + ((int)en.getWidth()-2) + " " + ((int)en.getHeight()-2) + "\n");
+					List<Entity> filteredList = images.stream().filter(p -> p.getName().contains(filter.getText())).collect(Collectors.toList());
+					w.write(filteredList.size() + "\n");
+
+					for(Entity en: filteredList) {
+						w.write(en.getName() + " " + ((int)en.getPosition().x+1) + " " + ((int)en.getPosition().y+1) + " " + ((int)en.getWidth()-2) + " " + ((int)en.getHeight()-2) + "\n");
 					}
 					w.close();
 
 					BufferedImage image = new BufferedImage(Integer.parseInt(sizeInput.getText()), Integer.parseInt(sizeInput.getText()), BufferedImage.TYPE_INT_ARGB);
 					Graphics g = image.getGraphics();
-					for(Entity en: images) {
+					for(Entity en: filteredList) {
 						BufferedImage i = TextureHandler.getImagePng(en.getName());
 
 						int x = (int)en.getPosition().x+1;
@@ -256,12 +267,13 @@ public class Window extends JFrame{
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
-
-
 			}
 		});
-
 		this.add(controllPanel, BorderLayout.LINE_END);
+
+		filter = new JTextField("");
+		controllPanel.add(filter);
+		filter.setBounds(0, 500, buttonWidth, 50);
 
 		viewPanel = new CoolPane(sizeInput);
 		this.add(viewPanel, BorderLayout.CENTER);
@@ -274,7 +286,12 @@ public class Window extends JFrame{
 	}
 
 	public void random() {
-		for(Entity en: images) en.setPosition( r.nextInt(Integer.parseInt(sizeInput.getText())), r.nextInt(Integer.parseInt(sizeInput.getText())));
+		for(Entity en: images) {
+			int max = 0;
+			if(!sizeInput.getText().equalsIgnoreCase("")) max = Integer.parseInt(sizeInput.getText());
+
+			en.setPosition( r.nextInt(max), r.nextInt(max));
+		}
 	}
 
 	public void draw() {
@@ -282,12 +299,12 @@ public class Window extends JFrame{
 			long lastDrawing;
 			while (true) {
 				String size = sizeInput.getText();
-				if(size == "") return;
+				if(size.equals("")) return;
 
 				lastDrawing = System.currentTimeMillis();
 
 				try {
-					viewPanel.paintComponent(images, Integer.parseInt(size), wire);
+					viewPanel.paintComponent(images, Integer.parseInt(size), wire, filter.getText());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

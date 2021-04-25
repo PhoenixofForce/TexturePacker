@@ -59,13 +59,13 @@ public class CoolPane extends JPanel {
 
 	private void centerCamera() {
 		String size = in.getText();
-		if(size != "")
+		if(!size.equals(""))
 		this.dx = -Integer.parseInt(size) / 2;
 		this.dy = -Integer.parseInt(size) / 2;
 		this.zoom = 0.5f;
 	}
 
-	public void paintComponent(List<Entity> images, int size, int wire) {
+	public void paintComponent(List<Entity> images, int size, int wire, String filter) {
 		Graphics g = this.getGraphics();
 		BufferedImage img = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2 = (Graphics2D) img.getGraphics();
@@ -84,6 +84,8 @@ public class CoolPane extends JPanel {
 		g2.setColor(Color.RED);
 		for(int i = 0; i < images.size(); i++) {
 			Entity e = images.get(i);
+			if(!e.getName().contains(filter)) continue;
+
 			if(wire==0 || wire==1) g2.drawRect((int)e.getPosition().x, (int)e.getPosition().y, (int)e.getWidth(), (int)e.getHeight());
 			if(wire == 1||wire ==2) g2.drawImage(TextureHandler.getImagePng(e.getName()), (int)e.getPosition().x+1, (int)e.getPosition().y+1, null);
 		}
